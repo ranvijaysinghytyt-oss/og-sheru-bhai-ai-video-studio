@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#171717">
+<title>OG Sheru Bhai — AI Story Prompt Generator</title>
+<style>
+:root{color-scheme:dark;--bg:#111;--panel:#1d1d1d;--line:#373737;--text:#f5f5f5;--muted:#b9b9b9;--accent:#f5b942}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Noto Sans Devanagari",sans-serif}
+main{max-width:900px;margin:auto;padding:24px 16px 56px}.hero{padding:26px 20px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,#282016,#1b1b1b)}
+h1{font-size:clamp(26px,5vw,40px);line-height:1.15;margin:0 0 8px}.sub{color:var(--muted);margin:0}
+form,.output{margin-top:20px;padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}.wide{grid-column:1/-1}label{font-weight:650}
+input,textarea,select{width:100%;border:1px solid #555;border-radius:10px;background:#111;color:var(--text);padding:12px;font:inherit}
+textarea{min-height:100px;resize:vertical}input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+small,.hint{color:var(--muted)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer;background:var(--accent);color:#17120a}
+button.secondary{background:#333;color:#fff;border:1px solid #555}button:focus-visible{outline:2px solid white;outline-offset:3px}
+#results{display:grid;gap:12px;margin-top:16px}.clip{border:1px solid var(--line);border-radius:12px;padding:14px;background:#151515}.cliphead{display:flex;justify-content:space-between;align-items:center;gap:10px}.clip h3{margin:0;font-size:18px}.clip pre{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.6 inherit;color:#eee;margin:12px 0 0}
+.clip button{padding:8px 12px;font-size:14px}.empty{color:var(--muted);text-align:center;padding:24px 8px}
+footer{color:var(--muted);font-size:13px;margin-top:18px}
+@media(max-width:620px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}form,.output{padding:15px}}
+</style>
+</head>
+<body>
+<main>
+<header class="hero">
+<h1>🎬 OG Sheru Bhai</h1>
+<p class="sub">AI Story Prompt Generator — अपनी कहानी को 15-15 सेकंड की वीडियो क्लिप्स में बदलें।</p>
+</header>
+<form id="builder">
+<div class="grid">
+<div class="field wide"><label for="story">कहानी / वीडियो का आइडिया *</label><textarea id="story" required placeholder="जैसे: शेरू भाई गाँव को एक रहस्यमयी रोबोट से बचाते हैं..."></textarea></div>
+<div class="field"><label for="heroName">मुख्य किरदार</label><input id="heroName" value="Sheru Bhai"></div>
+<div class="field"><label for="look">किरदार का लुक</label><input id="look" placeholder="अपनी reference image के अनुसार"></div>
+<div class="field"><label for="clips">कितनी क्लिप्स?</label><select id="clips"><option>2</option><option selected>4</option><option>5</option><option>6</option><option>8</option><option>10</option></select></div>
+<div class="field"><label for="ratio">वीडियो फॉर्मेट</label><select id="ratio"><option value="9:16 vertical">9:16 — YouTube Shorts</option><option value="16:9 horizontal">16:9 — YouTube video</option></select></div>
+<div class="field"><label for="genre">कहानी का अंदाज़</label><select id="genre"><option>Comedy action</option><option>Action adventure</option><option>Emotional drama</option><option>Mystery thriller</option><option>Family friendly comedy</option></select></div>
+<div class="field"><label for="language">डायलॉग की भाषा</label><select id="language"><option>Natural Hindi</option><option>Funny desi Hindi</option><option>Hindi with local village slang</option><option>Hinglish</option></select></div>
+<div class="field wide"><label for="notes">खास निर्देश (वैकल्पिक)</label><textarea id="notes" placeholder="जैसे: शेरू भाई की आवाज़ हर क्लिप में एक जैसी रहे, अजीब मज़ेदार बोलने का अंदाज़ हो..."></textarea></div>
+</div>
+<div class="actions"><button type="submit">क्लिप प्रॉम्प्ट बनाओ</button><button class="secondary" type="reset">साफ़ करो</button></div>
+<p class="hint">नोट: यह टूल आपके दिए हुए आइडिया से prompt draft बनाता है। AI वीडियो अपने आप render नहीं करता।</p>
+</form>
+<section class="output" aria-live="polite">
+<div class="cliphead"><div><h2 style="margin:0">तुम्हारे वीडियो क्लिप्स</h2><small id="count">अभी कोई prompt नहीं बना।</small></div><button id="copyAll" class="secondary" type="button" disabled>सभी कॉपी करो</button></div>
+<div id="results"><div class="empty">ऊपर कहानी लिखो और “क्लिप प्रॉम्प्ट बनाओ” दबाओ।</div></div>
+</section>
+<footer>OG Sheru Bhai AI Video Studio · हर clip को इस्तेमाल करने से पहले जाँचें। Video tool के credits खर्च करने से पहले एक test clip बनाएँ।</footer>
+</main>
+<script>
+const form=document.getElementById('builder'),results=document.getElementById('results'),count=document.getElementById('count'),copyAll=document.getElementById('copyAll');
+let generated=[];
+function makeClip(i,total,data){
+ const beats=[
+  'शुरुआत में जगह और किरदार को साफ़ दिखाएँ; कहानी का hook स्थापित करें।',
+  'मुख्य समस्या सामने आए; किरदार का reaction और dialogue दिखाएँ।',
+  'किरदार कोई action या कोशिश करे; घटना को आगे बढ़ाएँ।',
+  'एक unexpected मोड़ या मज़ेदार complication दिखाएँ।',
+  'कहानी का सबसे बड़ा action या emotional moment दिखाएँ।',
+  'समस्या का हल और satisfying ending दें; ज़रूरत हो तो अगली कहानी का छोटा hook रखें।'
+ ];
+ const beat=beats[Math.min(i-1,beats.length-1)];
+ const dialogue=i===1?'पहले 2 सेकंड में छोटा, दमदार hook dialogue रखें।':'इस clip में कहानी के हिसाब से छोटा और स्वाभाविक dialogue रखें।';
+ return 'CLIP '+String(i).padStart(2,'0')+' / '+total+' — 15 SECONDS\n\n' +
+ 'STORY CONTEXT:\n'+data.story+'\n\n' +
+ 'VISUAL PROMPT (English):\nCreate a polished, family-friendly '+data.genre+' video in '+data.ratio+' aspect ratio. Main character: '+data.hero+'. Character appearance: '+(data.look||'match the supplied character reference image exactly')+'. Keep the same face, body proportions, outfit, accessories and visual identity as every other clip. Scene action: '+beat+' Make the action clear and physically consistent. Use expressive cinematic framing, natural movement, detailed environment, coherent lighting and smooth motion. This is clip '+i+' of '+total+'; maintain continuity with the same story and characters.\n\n' +
+ 'DIALOGUE DIRECTION:\nLanguage: '+data.language+'. '+dialogue+' Keep the character voice consistent across all clips. Accurate Hindi pronunciation and natural lip sync. Do not invent unrelated dialogue.\n\n' +
+ 'ACTION TIMELINE:\n0–5 sec: Establish the scene and begin the action.\n5–10 sec: Develop the key action and reaction.\n10–15 sec: Complete this beat and end on a clear pose/action that can connect to the next clip.\n\n' +
+ 'CAMERA & SOUND:\nUse clear cinematic camera framing; avoid unnecessary cuts. Add suitable ambience and restrained sound effects. Keep dialogue louder and clear.\n\n' +
+ 'CONTINUITY:\n'+(i===1?'Begin the story naturally and establish the location.':'Start from a believable continuation of the previous clip; preserve character position, props, lighting and location where appropriate.')+' '+(i===total?'Give the story a satisfying ending.':'End with a visual transition or action that the next clip can continue.')+'\n\n' +
+ 'SPECIAL INSTRUCTIONS:\n'+(data.notes||'No extra instructions.')+'\n\n' +
+ 'NEGATIVE PROMPT:\nNo character redesign, no face changes, no costume changes, no extra fingers or limbs, no distorted hands, no flicker, no random background changes, no duplicated characters, no unwanted on-screen text, no subtitles unless requested, no watermark.';
+}
+form.addEventListener('submit',e=>{
+ e.preventDefault();
+ const data={story:document.getElementById('story').value.trim(),hero:document.getElementById('heroName').value.trim()||'Sheru Bhai',look:document.getElementById('look').value.trim(),genre:document.getElementById('genre').value,language:document.getElementById('language').value,ratio:document.getElementById('ratio').value,notes:document.getElementById('notes').value.trim()};
+ const total=Number(document.getElementById('clips').value);
+ if(!data.story)return;
+ generated=Array.from({length:total},(_,n)=>makeClip(n+1,total,data));
+ results.innerHTML='';
+ generated.forEach((prompt,i)=>{
+  const card=document.createElement('article');card.className='clip';
+  const head=document.createElement('div');head.className='cliphead';
+  const h=document.createElement('h3');h.textContent='क्लिप '+(i+1)+' · 15 सेकंड';
+  const btn=document.createElement('button');btn.type='button';btn.className='secondary';btn.textContent='कॉपी करो';
+  btn.addEventListener('click',()=>copyText(prompt,btn));
+  const pre=document.createElement('pre');pre.textContent=prompt;
+  head.append(h,btn);card.append(head,pre);results.append(card);
+ });
+ count.textContent=total+' क्लिप प्रॉम्प्ट तैयार हैं।';
+ copyAll.disabled=false;
+});
+async function copyText(text,button){
+ try{await navigator.clipboard.writeText(text);const old=button.textContent;button.textContent='कॉपी हो गया ✓';setTimeout(()=>button.textContent=old,1400);}
+ catch(e){const t=document.createElement('textarea');t.value=text;document.body.append(t);t.select();document.execCommand('copy');t.remove();button.textContent='कॉपी हो गया ✓';}
+}
+copyAll.addEventListener('click',()=>copyText(generated.join('\n\n'+'='.repeat(48)+'\n\n'),copyAll));
+form.addEventListener('reset',()=>{generated=[];results.innerHTML='<div class="empty">ऊपर कहानी लिखो और “क्लिप प्रॉम्प्ट बनाओ” दबाओ।</div>';count.textContent='अभी कोई prompt नहीं बना।';copyAll.disabled=true;});
+</script>
+</body>
+</html>
